@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}VCET Reviews{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-inner">
+        <div class="nav-brand">
+            <span class="vcet-text">VCET</span>
+            <span class="nav-subtitle">Student Review System</span>
+        </div>
+        {% if session.get('role') %}
+        <div class="nav-right">
+            <span class="nav-user">
+                {% if session['role'] == 'student' %}👤{% else %}🎓{% endif %}
+                {{ session.get('name', '') }}
+            </span>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
+        </div>
+        {% else %}
+        <div class="nav-right">
+            <a href="{{ url_for('student_login') }}" class="nav-link">Student Login</a>
+            <a href="{{ url_for('teacher_login') }}" class="nav-link">Faculty Login</a>
+        </div>
+        {% endif %}
+    </div>
+</nav>
+
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>

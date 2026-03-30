@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Student Login — VCET{% endblock %}
+
+{% block content %}
+<div class="login-page">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-icon">🎓</div>
+            <h1>Student Login</h1>
+            <p>Enter your VCET Student ID to continue</p>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('student_login') }}" class="login-form">
+            <div class="form-group">
+                <label for="vcet_id">Student ID</label>
+                <input type="text" id="vcet_id" name="vcet_id" 
+                       placeholder="e.g. VCET2024AIDSG001" 
+                       required autocomplete="off">
+                <span class="hint">Format: VCET + Year + Branch + Roll</span>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" 
+                       placeholder="Enter your password" required>
+            </div>
+            <button type="submit" class="btn-primary">Login as Student</button>
+        </form>
+
+        <div class="login-switch">
+            Are you faculty? <a href="{{ url_for('teacher_login') }}">Faculty Login →</a>
+        </div>
+
+        <div class="demo-creds">
+            <strong>Demo:</strong> ID: VCET2024AIDSG001 &nbsp;|&nbsp; Password: student123
+        </div>
+    </div>
+</div>
+{% endblock %}

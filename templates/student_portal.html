@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Student Portal — VCET Reviews{% endblock %}
+
+{% block content %}
+<div class="portal-page">
+
+    <!-- Review Submission Form -->
+    <div class="submit-section">
+        <h2>Submit a Review</h2>
+        <div id="form-msg" class="form-msg" style="display:none;"></div>
+        <div class="submit-form-inner">
+            <div class="form-group">
+                <label>Select Subject</label>
+                <select id="subject_id">
+                    <option value="">-- Choose a subject --</option>
+                    {% for s in subjects %}
+                    <option value="{{ s.id }}" {% if s.id in reviewed_subject_ids %}disabled{% endif %}>
+                        {{ s.name }} ({{ s.code }}) {% if s.id in reviewed_subject_ids %}✓ Reviewed{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Your Rating</label>
+                <div class="star-picker" id="starPicker">
+                    <span class="star" data-val="1">★</span>
+                    <span class="star" data-val="2">★</span>
+                    <span class="star" data-val="3">★</span>
+                    <span class="star" data-val="4">★</span>
+                    <span class="star" data-val="5">★</span>
+                </div>
+                <input type="hidden" id="rating" value="0">
+            </div>
+            <div class="form-group">
+                <label>Your Review <span id="char-count" class="char-count">0 / 500</span></label>
+                <textarea id="review-text" placeholder="Share your honest feedback (20–500 characters)..." rows="3"></textarea>
+            </div>
+            <button onclick="submitReview()" class="btn-primary">Submit Review</button>
+        </div>
+    </div>
+
+    <!-- Split Layout -->
+    <div class="portal-split">
+
+        <!-- LEFT: Review Feed -->
+        <div class="feed-panel">
+            <h2>All Reviews <span class="review-count">({{ reviews|length }})</span></h2>
+            <div class="review-feed" id="reviewFeed">
+                {% if reviews %}
+                    {% for r in reviews %}
+                    <div class="review-card fade-in">
+                        <div class="review-top">
+                            <span class="review-subject">{{ r.subject }}</span>
+                            <span class="stars-display">
+                                {% for i in range(1, 6) %}
+                                    {% if i <= r.rating %}<span class="star-filled">★</span>{% else %}<span class="star-empty">★</span>{% endif %}
+                                {% endfor %}
+                            </span>
+                        </div>
+                        <p class="review-text">{{ r.text }}</p>
+                        <div class="review-meta">
+                            <span class="anon-label">Anonymous Student</span>
+                            <span class="review-time">{{ r.time_ago }}</span>
+                        </div>
+                        {% if r.response %}
+                        <div class="faculty-response">
+                            <span class="response-label">Faculty Response:</span>
+                            <p>{{ r.response }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">No reviews yet. Be the first to share your feedback!</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- RIGHT: Top Review Spotlight -->
+        <div class="spotlight-panel">
+            <h2>⭐ Top Review</h2>
+            {% if top_review %}
+            <div class="spotlight-card">
+                <div class="spotlight-badge">TOP RATED</div>
+                <div class="spotlight-subject">{{ top_review.subject }}</div>
+                <div class="spotlight-stars">
+                    {% for i in range(1, 6) %}
+                        {% if i <= top_review.rating %}<span class="star-filled">★</span>{% else %}<span class="star-empty">★</span>{% endif %}
+                    {% endfor %}
+                </div>
+                <p class="spotlight-text">"{{ top_review.text }}"</p>
+                <div class="spotlight-meta">
+                    <span>Anonymous Student</span>
+                    <span>{{ top_review.time_ago }}</span>
+                </div>
+                {% if top_review.response %}
+                <div class="faculty-response">
+                    <span class="response-label">Faculty Response:</span>
+                    <p>{{ top_review.response }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="empty-state">No reviews yet!</div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

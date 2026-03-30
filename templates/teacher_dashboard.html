@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Faculty Dashboard — VCET{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+
+    <div class="dashboard-header">
+        <h1>Faculty Dashboard</h1>
+        <p>Welcome, {{ teacher_name }} — Manage and respond to student reviews</p>
+    </div>
+
+    <!-- Analytics Summary -->
+    <div class="analytics-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_reviews }}</div>
+            <div class="stat-label">Total Reviews</div>
+        </div>
+        <div class="stat-card stat-warn">
+            <div class="stat-number">{{ no_response_count }}</div>
+            <div class="stat-label">Awaiting Response</div>
+        </div>
+        <div class="stat-card stat-good">
+            <div class="stat-number">{{ total_reviews - no_response_count }}</div>
+            <div class="stat-label">Responded</div>
+        </div>
+    </div>
+
+    <!-- Average Ratings per Subject -->
+    {% if avg_per_subject %}
+    <div class="avg-section">
+        <h2>Average Ratings by Subject</h2>
+        <div class="avg-bars">
+            {% for subject, avg in avg_per_subject.items() %}
+            <div class="avg-row">
+                <span class="avg-subject">{{ subject }}</span>
+                <div class="avg-bar-wrap">
+                    <div class="avg-bar" style="width: {{ (avg / 5 * 100)|int }}%"></div>
+                </div>
+                <span class="avg-score">{{ avg }} / 5</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Reviews Table -->
+    <div class="reviews-section">
+        <h2>All Reviews</h2>
+        {% if reviews %}
+        {% for r in reviews %}
+        <div class="teacher-review-card" id="review-{{ r.id }}">
+            <div class="teacher-review-top">
+                <div>
+                    <span class="review-subject">{{ r.subject }}</span>
+                    <span class="subject-code">({{ r.subject_code }})</span>
+                </div>
+                <div class="teacher-stars">
+                    {% for i in range(1, 6) %}
+                        {% if i <= r.rating %}<span class="star-filled">★</span>{% else %}<span class="star-empty">★</span>{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <p class="review-text">{{ r.text }}</p>
+            <div class="review-meta">
+                <span class="anon-label">Anonymous Student</span>
+                <span class="review-time">{{ r.time_ago }}</span>
+            </div>
+
+            <!-- Faculty Response Area -->
+            {% if r.response %}
+            <div class="faculty-response" id="resp-display-{{ r.id }}">
+                <span class="response-label">Your Response:</span>
+                <p id="resp-text-{{ r.id }}">{{ r.response }}</p>
+                <div class="resp-actions">
+                    <button onclick="showEditForm({{ r.id }}, '{{ r.response|replace("'", "\\'") }}')" class="btn-small btn-edit">Edit</button>
+                    <button onclick="deleteResponse({{ r.id }})" class="btn-small btn-delete">Delete</button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Response Form -->
+            <div class="response-form" id="resp-form-{{ r.id }}" style="{% if r.response %}display:none;{% endif %}">
+                <textarea id="resp-input-{{ r.id }}" placeholder="Write your faculty response..." rows="2">{{ r.response or '' }}</textarea>
+                <div class="resp-form-actions">
+                    <button onclick="submitResponse({{ r.id }})" class="btn-small btn-primary">
+                        {% if r.response %}Update{% else %}Respond{% endif %}
+                    </button>
+                    {% if r.response %}
+                    <button onclick="cancelEdit({{ r.id }})" class="btn-small btn-cancel">Cancel</button>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if not r.response %}
+            <button onclick="toggleForm({{ r.id }})" class="btn-respond" id="btn-{{ r.id }}">+ Add Response</button>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">No reviews submitted yet.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
