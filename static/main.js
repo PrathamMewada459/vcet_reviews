@@ -8,7 +8,6 @@ if (starPicker) {
     var stars = starPicker.querySelectorAll(".star");
 
     stars.forEach(function(star) {
-        // Hover effect
         star.addEventListener("mouseover", function() {
             var val = parseInt(this.getAttribute("data-val"));
             highlightStars(val);
@@ -16,7 +15,6 @@ if (starPicker) {
         star.addEventListener("mouseout", function() {
             highlightStars(selectedRating);
         });
-        // Click to select
         star.addEventListener("click", function() {
             selectedRating = parseInt(this.getAttribute("data-val"));
             document.getElementById("rating").value = selectedRating;
@@ -44,56 +42,120 @@ if (reviewTextarea && charCount) {
     reviewTextarea.addEventListener("input", function() {
         var len = this.value.length;
         charCount.textContent = len + " / 500";
-        if (len > 450) {
-            charCount.style.color = "#e74c3c";
-        } else {
-            charCount.style.color = "";
-        }
+        charCount.style.color = len > 450 ? "#e74c3c" : "";
     });
 }
 
-// Submit review via fetch (no page reload)
+// ===== LOAD REVIEWS FROM API =====
+function renderStars(rating) {
+    var html = '';
+    for (var i = 1; i <= 5; i++) {
+        html += i <= rating
+            ? '<span class="star-filled">★</span>'
+            : '<span class="star-empty">★</span>';
+    }
+    return html;
+}
+
+function loadReviews() {
+    var feed = document.getElementById("reviewFeed");
+    var topBox = document.getElementById("topReviewBox");
+
+    // Load all reviews
+    if (feed) {
+        fetch("/api/reviews")
+            .then(function(res) { return res.json(); })
+            .then(function(reviews) {
+                if (!reviews || reviews.length === 0) {
+                    feed.innerHTML = '<div class="empty-state">No reviews yet. Be the first to share your feedback!</div>';
+                    return;
+                }
+                feed.innerHTML = reviews.map(function(r) {
+                    var responseHtml = r.response
+                        ? '<div class="faculty-response"><span class="response-label">Faculty Response:</span><p>' + r.response.text + '</p></div>'
+                        : '';
+                    return '<div class="review-card fade-in">' +
+                        '<div class="review-top">' +
+                            '<span class="review-subject">' + r.subject + '</span>' +
+                            '<span class="stars-display">' + renderStars(r.rating) + '</span>' +
+                        '</div>' +
+                        '<p class="review-text">' + r.text + '</p>' +
+                        '<div class="review-meta">' +
+                            '<span class="anon-label">Anonymous Student</span>' +
+                            '<span class="review-time">' + r.created_at + '</span>' +
+                        '</div>' +
+                        responseHtml +
+                    '</div>';
+                }).join('');
+            })
+            .catch(function() {
+                feed.innerHTML = '<div class="empty-state">Could not load reviews. Please refresh.</div>';
+            });
+    }
+
+    // Load top review
+    if (topBox) {
+        fetch("/api/top-review")
+            .then(function(res) { return res.json(); })
+            .then(function(r) {
+                if (!r) {
+                    topBox.innerHTML = '<div class="empty-state">No reviews yet!</div>';
+                    return;
+                }
+                var responseHtml = r.response
+                    ? '<div class="faculty-response"><span class="response-label">Faculty Response:</span><p>' + r.response.text + '</p></div>'
+                    : '';
+                topBox.innerHTML =
+                    '<div class="spotlight-card">' +
+                        '<div class="spotlight-badge">TOP RATED</div>' +
+                        '<div class="spotlight-subject">' + r.subject + '</div>' +
+                        '<div class="spotlight-stars">' + renderStars(r.rating) + '</div>' +
+                        '<p class="spotlight-text">"' + r.text + '"</p>' +
+                        '<div class="spotlight-meta">' +
+                            '<span>Anonymous Student</span>' +
+                            '<span>' + r.created_at + '</span>' +
+                        '</div>' +
+                        responseHtml +
+                    '</div>';
+            })
+            .catch(function() {
+                if (topBox) topBox.innerHTML = '<div class="empty-state">Could not load top review.</div>';
+            });
+    }
+}
+
+// Run on student portal page
+if (document.getElementById("reviewFeed") || document.getElementById("topReviewBox")) {
+    loadReviews();
+}
+
+// ===== SUBMIT REVIEW =====
 function submitReview() {
     var subjectId = document.getElementById("subject_id").value;
     var rating = document.getElementById("rating").value;
     var text = document.getElementById("review-text").value;
     var msgBox = document.getElementById("form-msg");
 
-    // Basic client-side validation
-    if (!subjectId) {
-        showMsg(msgBox, "Please select a subject.", "error");
-        return;
-    }
-    if (rating === "0") {
-        showMsg(msgBox, "Please select a star rating.", "error");
-        return;
-    }
-    if (text.trim().length < 20) {
-        showMsg(msgBox, "Review must be at least 20 characters.", "error");
-        return;
-    }
+    if (!subjectId) { showMsg(msgBox, "Please select a subject.", "error"); return; }
+    if (rating === "0") { showMsg(msgBox, "Please select a star rating.", "error"); return; }
+    if (text.trim().length < 20) { showMsg(msgBox, "Review must be at least 20 characters.", "error"); return; }
 
     var formData = new FormData();
     formData.append("subject_id", subjectId);
     formData.append("rating", rating);
     formData.append("text", text);
 
-    fetch("/submit-review", {
-        method: "POST",
-        body: formData
-    })
-    .then(function(res) { return res.json(); })
-    .then(function(data) {
-        if (data.success) {
-            showMsg(msgBox, "Review submitted! Refreshing...", "success");
-            setTimeout(function() { window.location.reload(); }, 1200);
-        } else {
-            showMsg(msgBox, data.error || "Something went wrong.", "error");
-        }
-    })
-    .catch(function() {
-        showMsg(msgBox, "Network error. Please try again.", "error");
-    });
+    fetch("/submit-review", { method: "POST", body: formData })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                showMsg(msgBox, "Review submitted! Refreshing...", "success");
+                setTimeout(function() { window.location.reload(); }, 1200);
+            } else {
+                showMsg(msgBox, data.error || "Something went wrong.", "error");
+            }
+        })
+        .catch(function() { showMsg(msgBox, "Network error. Please try again.", "error"); });
 }
 
 function showMsg(box, msg, type) {
@@ -102,9 +164,25 @@ function showMsg(box, msg, type) {
     box.style.display = "block";
 }
 
+// ===== MODAL (Write a Review button) =====
+function openModal() {
+    var modal = document.getElementById("reviewModal");
+    if (modal) modal.style.display = "flex";
+}
+
+function closeModal() {
+    var modal = document.getElementById("reviewModal");
+    if (modal) modal.style.display = "none";
+}
+
+// Close modal on background click
+document.addEventListener("click", function(e) {
+    var modal = document.getElementById("reviewModal");
+    if (modal && e.target === modal) closeModal();
+});
+
 // ===== TEACHER DASHBOARD FUNCTIONS =====
 
-// Toggle response form
 function toggleForm(reviewId) {
     var form = document.getElementById("resp-form-" + reviewId);
     var btn = document.getElementById("btn-" + reviewId);
@@ -117,7 +195,6 @@ function toggleForm(reviewId) {
     }
 }
 
-// Show edit form (when response already exists)
 function showEditForm(reviewId, currentText) {
     var display = document.getElementById("resp-display-" + reviewId);
     var form = document.getElementById("resp-form-" + reviewId);
@@ -127,7 +204,6 @@ function showEditForm(reviewId, currentText) {
     if (input) input.value = currentText;
 }
 
-// Cancel edit (go back to display)
 function cancelEdit(reviewId) {
     var display = document.getElementById("resp-display-" + reviewId);
     var form = document.getElementById("resp-form-" + reviewId);
@@ -135,7 +211,7 @@ function cancelEdit(reviewId) {
     if (form) form.style.display = "none";
 }
 
-// Submit or update a response
+// FIX: Send JSON instead of FormData (app.py uses request.get_json())
 function submitResponse(reviewId) {
     var input = document.getElementById("resp-input-" + reviewId);
     var text = input ? input.value.trim() : "";
@@ -145,42 +221,30 @@ function submitResponse(reviewId) {
         return;
     }
 
-    var formData = new FormData();
-    formData.append("response_text", text);
-
     fetch("/teacher/respond/" + reviewId, {
         method: "POST",
-        body: formData
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text })   // ← was FormData, now JSON
     })
     .then(function(res) { return res.json(); })
     .then(function(data) {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert(data.error || "Something went wrong.");
-        }
+        if (data.success) { window.location.reload(); }
+        else { alert(data.error || "Something went wrong."); }
     })
-    .catch(function() {
-        alert("Network error. Please try again.");
-    });
+    .catch(function() { alert("Network error. Please try again."); });
 }
 
-// Delete a response
+// FIX: Use DELETE method instead of wrong /delete URL
 function deleteResponse(reviewId) {
     if (!confirm("Are you sure you want to delete this response?")) return;
 
-    fetch("/teacher/respond/" + reviewId + "/delete", {
-        method: "POST"
+    fetch("/teacher/respond/" + reviewId, {
+        method: "DELETE"   // ← was POST to /delete, now DELETE to same URL
     })
     .then(function(res) { return res.json(); })
     .then(function(data) {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert("Could not delete response.");
-        }
+        if (data.success) { window.location.reload(); }
+        else { alert("Could not delete response."); }
     })
-    .catch(function() {
-        alert("Network error. Please try again.");
-    });
+    .catch(function() { alert("Network error. Please try again."); });
 }

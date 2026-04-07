@@ -44,65 +44,24 @@
 
         <!-- LEFT: Review Feed -->
         <div class="feed-panel">
-            <h2>All Reviews <span class="review-count">({{ reviews|length }})</span></h2>
+            <h2>All Reviews</h2>
+            <!-- JS loads reviews into this div -->
             <div class="review-feed" id="reviewFeed">
-                {% if reviews %}
-                    {% for r in reviews %}
-                    <div class="review-card fade-in">
-                        <div class="review-top">
-                            <span class="review-subject">{{ r.subject }}</span>
-                            <span class="stars-display">
-                                {% for i in range(1, 6) %}
-                                    {% if i <= r.rating %}<span class="star-filled">★</span>{% else %}<span class="star-empty">★</span>{% endif %}
-                                {% endfor %}
-                            </span>
-                        </div>
-                        <p class="review-text">{{ r.text }}</p>
-                        <div class="review-meta">
-                            <span class="anon-label">Anonymous Student</span>
-                            <span class="review-time">{{ r.time_ago }}</span>
-                        </div>
-                        {% if r.response %}
-                        <div class="faculty-response">
-                            <span class="response-label">Faculty Response:</span>
-                            <p>{{ r.response }}</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="empty-state">No reviews yet. Be the first to share your feedback!</div>
-                {% endif %}
+                <div class="empty-state" style="display:flex;align-items:center;gap:10px;">
+                    <span>Loading reviews...</span>
+                </div>
             </div>
         </div>
 
         <!-- RIGHT: Top Review Spotlight -->
         <div class="spotlight-panel">
             <h2>⭐ Top Review</h2>
-            {% if top_review %}
-            <div class="spotlight-card">
-                <div class="spotlight-badge">TOP RATED</div>
-                <div class="spotlight-subject">{{ top_review.subject }}</div>
-                <div class="spotlight-stars">
-                    {% for i in range(1, 6) %}
-                        {% if i <= top_review.rating %}<span class="star-filled">★</span>{% else %}<span class="star-empty">★</span>{% endif %}
-                    {% endfor %}
+            <!-- JS loads top review into this div -->
+            <div id="topReviewBox">
+                <div class="empty-state" style="display:flex;align-items:center;gap:10px;">
+                    <span>Loading...</span>
                 </div>
-                <p class="spotlight-text">"{{ top_review.text }}"</p>
-                <div class="spotlight-meta">
-                    <span>Anonymous Student</span>
-                    <span>{{ top_review.time_ago }}</span>
-                </div>
-                {% if top_review.response %}
-                <div class="faculty-response">
-                    <span class="response-label">Faculty Response:</span>
-                    <p>{{ top_review.response }}</p>
-                </div>
-                {% endif %}
             </div>
-            {% else %}
-            <div class="empty-state">No reviews yet!</div>
-            {% endif %}
         </div>
 
     </div>
